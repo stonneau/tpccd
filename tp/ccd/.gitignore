@@ -9,6 +9,5 @@ Build/*
 # http://stackoverflow.com/questions/1...ops-pidb-files
 *.pidb
 *.userprefs
-*.meta
 *.sln
 *.csproj
