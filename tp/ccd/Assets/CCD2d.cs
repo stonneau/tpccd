@@ -2,11 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class CCD2d : MonoBehaviour {
-	#region script_parameters
-	// the end effector of the kinematic chain
-	// In our case the last sphere on the hierrarchy
-	public Transform effector;
-	
+	#region script_parameters	
 	// the target we want the end-effector to reach
 	// In our case the cube
 	public Transform target;	
@@ -22,7 +18,7 @@ public class CCD2d : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		CCDStep2D(effector.parent, effector, target);
+		CCDStep2D(gameObject.transform.parent, gameObject.transform, target);
 	}
 	
 	

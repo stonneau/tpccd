@@ -2,11 +2,7 @@ using UnityEngine;
 using System.Collections;
 
 public class CCD3d : MonoBehaviour {
-	#region script_parameters
-	// the end effector of the kinematic chain
-	// In our case the last sphere on the hierrarchy
-	public Transform effector;
-	
+	#region script_parameters	
 	// the target we want the end-effector to reach
 	// In our case the cube
 	public Transform target;	
@@ -20,7 +16,7 @@ public class CCD3d : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		// in each frame we make one iteration
-		CCDStep3D(effector.parent, effector, target);
+		CCDStep3D(gameObject.transform.parent, gameObject.transform, target);
 	}
 	
 	/// \brief method for computing an angle value between two 3d vectors using
