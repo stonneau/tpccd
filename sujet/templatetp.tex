@@ -8,7 +8,9 @@
 \usepackage{shortvrb}
 \ifpdf \usepackage[pdftex]{graphicx} \pdfcompresslevel=9
 
-\title{TP Unity: \\ Cin\'ematique inverse avec l'algorithme CCD }
+\MakeShortVerb{|}
+
+\title{TP |Unity|: \\ Cin\'ematique inverse avec l'algorithme CCD }
 \date{\today}
 \author{Steve Tonneau\\ IRISA}
 
@@ -17,34 +19,36 @@
 
 \section*{Introduction}
 Ce TP propose de traiter un probl\`eme concret, r\'ecurent dans le domaine de l'animation, celui de la 
-cin\'ematique inverse. La partie \ref{problem} de ce document est consacr\'ee \`a la description du probl\`eme. Aussi
-les lecteurs les plus \'eclair\'es pourront directement passer \`a la partie \ref{implementation}. Cette seconde partie a pour 
-but de guider les \'etudiants dans l'impl\'ementation de l'algorithme CCD (pour Cyclic Coordinate Descent), tr\`es utilis\'e,
+cin\'ematique inverse. La partie \ref{problem} de ce document est consacr\'ee \`a la description du probl\`eme. La
+partie \ref{algo} est consacr\'ee \`a la pr\'esentation de l'algorithme CCD (pour Cyclic Coordinate Descent), tr\`es utilis\'e,
 en particulier dans le domaine du jeu vid\'eo, pour r\'esoudre le probl\`eme de cin\'ematique inverse.
+La partie \ref{implementation} a pour 
+but de guider les \'etudiants dans l'impl\'ementation de l'algorithme CCD.
 On l'impl\'ementera d'abord en 2, puis en 3 dimensions.
 
 \subsection*{Public concern\'e}
 Ce tp s'adresse \`a des \'etudiants en premi\`ere ann\'ee d'informatique. Il requiert une connaissance
-minimale du moteur Unity 3d \footnote{\href{http://unity3d.com/unity}{http://unity3d.com/unity.}} (Menus, syst\`eme de scripts).
+minimale du moteur |Unity| 3d \footnote{\href{http://unity3d.com/unity}{http://unity3d.com/unity.}} (Menus, syst\`eme de scripts).
 Les signatures des m\'ethodes utilis\'ees sont pr\'esent\'ees en C\#, mais il est facile de les transposer pour les langages Boo et javascript
-\'egalement accept\'es sous Unity. Aussi il est \'egalement n\'ecessaire d'avoir des connaissances dans un de ces langages cibles.
+\'egalement accept\'es sous |Unity|. Aussi il est \'egalement n\'ecessaire d'avoir des connaissances dans un de ces langages cibles.
 
-Pour comprendre et impl\'ementer l'algorithme CCD sous Unity, des connaissances math\'ematiques de niveau lyc\'ee sont n\'ecessaires.
+Pour comprendre et impl\'ementer l'algorithme CCD sous |Unity|, des connaissances math\'ematiques de niveau lyc\'ee sont n\'ecessaires.
 
 \subsection*{Dur\'ee}
 TODO 
 
 \subsection*{Mat\'eriel}
-Un squelette de projet est disponible \`a l'adresse TODO. Il n\'ecessite une version d'Unity (gratuite ou pro) sup\'erieure ou \'egale \`a la version 4.1. \\
+Un squelette de projet est disponible \`a l'adresse TODO. Il n\'ecessite une version d'|Unity| (gratuite ou pro) sup\'erieure ou \'egale \`a la version 4.1. \\
 
 Le projet comprend:
 \begin{itemize}
-	\item Une sc\`ene CCD.scene. Elle comprend elle-m\^eme:
+	\item Une sc\`ene |testScene.unity|. Elle comprend elle-m\^eme:
 		\begin{itemize} 
-			\item Une hi\'erarchie de sph\`eres qui servira de cha\^ine cin\'ematique pour l'exercice;
-			\item Un cube §Target§, qui repr\'esentera la cible \`a atteindre par notre cha\^ine cin\'ematique.
+			\item Une hi\'erarchie de sph\`eres qui servira de cha\^ine cin\'ematique pour l'exercice; la premi\`ere sph\`ere s'appelle |root|, la derni\`ere |effector|;
+			\item Un cube |target|, qui repr\'esentera la cible \`a atteindre par notre cha\^ine cin\'ematique.
 		\end{itemize}
-	\item Un squelette de script §CCD.cs§, qu'il va falloir modifier.
+	\item Deux squelettes |CCD2d.cs| et |CCD3d.cs|, qu'il va falloir modifier;
+	\item Un script |TargetController.cs|, d\'ej\`a impl\'ement\'e, qui permet de contr\^oler la cible au clavier.
 \end{itemize}
 
 \section{Probl\'ematique: La cin\'ematique inverse}
@@ -57,16 +61,17 @@ Consid\'erons la montre \`a gauche de la figure \ref{watch}:
   \centering
     \includegraphics[]{watch2}
   \caption{
-          \textit{A gauche: Une montre indiquant 2h15. A droite: la m\^eme montre munie d'un rep\`ere cart\'esien (Ox, Oy).}}
+          \textit{A gauche: Une montre indiquant 2h15. A droite: la m\^eme montre munie d'un rep\`ere cart\'esien $(\vec{Ox}, \vec{Oy})$.}}
 		   \label{watch}
 \end{figure}
 
 \subsubsection*{Cin\'ematique directe}
-Nous munissons notre montre d'un rep\`ere cart\'esien \textit{(Ox, Oy)} (figure \ref{watch}, droite), dans lequel la longueur
+Nous munissons notre montre d'un rep\`ere cart\'esien $(\vec{Ox}, \vec{Oy})$ (figure \ref{watch}, droite), dans lequel la longueur
 de la grande aiguille vaut 1.
 Nous appelons l'extr\'emit\'e ext\'erieure de l'aiguille \textbf{effecteur}. On observe en fait que l'effecteur se d\'eplace
-le long du cercle trigonom\`etrique associ\'e au rep\`ere \textit{(Ox, Oy)}. \\
-Ce d\'eplacement est r\'ealis\'e par une rotation d'un angle $\theta$ autour d'un troisi\'eme axe $Oz = Ox \wedge Oy$.
+le long du cercle trigonom\`etrique associ\'e au rep\`ere $(\vec{Ox}, \vec{Oy})$. \\
+Ce d\'eplacement est r\'ealis\'e par une rotation d'un angle $\theta$ autour d'un troisi\'eme axe $\vec{Oz} = \vec{Ox} \wedge \vec{Oy}$, qui prend
+son origine en $O$.
 
 On d\'efinit donc la fonction \textit{f}, telle que
  \begin{displaymath}  
@@ -75,7 +80,7 @@ cos(\theta) \\
 sin(\theta)
 \end{pmatrix}
  \end{displaymath}
-avec \begin{math} \theta \in [0, 2\pi[ \end{math}. \\
+avec \begin{math} \theta \in [-2\pi, 2\pi[ \end{math}. \\
 
 Gr\^ace \`a $f$ on peut conna\^itre la position de l'effecteur de la grande aiguille en fonction de l'angle $\theta$. Par exemple, si $\theta = -\pi / 2$,
 l'effecteur est \`a la position $\begin{pmatrix}
@@ -96,7 +101,7 @@ $\begin{pmatrix} x \\ y \end{pmatrix}$.
 
 \subsubsection*{Cin\'ematique inverse}
 On consid\`ere le probl\`eme inverse:
-On souhaite r\'egler l'heure \`a 2h30,  c'est \`a dire que l'extr\'emit\'e de la grande aiguille ait pour coordonn\'ees $\begin{pmatrix} 0 \\ -1 \end{pmatrix}$.
+On souhaite r\'egler l'heure \`a 2h30,  c'est \`a dire que l'extr\'emit\'e de la grande aiguille aie pour coordonn\'ees $\begin{pmatrix} 0 \\ -1 \end{pmatrix}$.
 Quelle valeur doit prendre l'angle $\theta$ pour atteindre cet objectif? \\
 
 On d\'efinit la fonction $f^{-1}$, telle que
@@ -192,10 +197,20 @@ Quand une cha\^ine cin\'ematique est trop complexe, il est difficile, voire impo
 cela que des m\'ethodes num\'eriques ont \'et\'e mises au point pour calculer les valeurs de $f^{-1}$, comme la m\'ethode CCD.
   
 \subsection{Cin\'ematique en 3 dimensions}
-Nous avons vu qu'en deux dimensions nous consid\'erons des rotations autour de l'axe $Oz = Ox \wedge Oy$.
-En 3 dimensions, il nous faudra \'egalement consid\'erer des rotations autour des axes Ox et Oy (figure \ref{rot3d}).
- 
-  \begin{figure}[htb]
+Nous avons vu qu'en deux dimensions nous consid\'erons des rotations autour de l'axe $\vec{Oz} = \vec{Ox} \wedge \vec{Oy}$.
+En 3 dimensions, il nous faudra \'egalement consid\'erer des rotations autour des axes $\vec{Ox}$ et $\vec{Oy}$ (figure \ref{rot3d}).
+En th\'eorie cela fait donc 3 fois plus d'angles \`a prendre en compte!
+
+Une autre mani\`ere de voir les choses est ramener la combinaison de 3 rotations \`a une seule rotation d'angle $\theta$ autour
+d'un axe $\vec{u}$ \`a d\'efinir. Comme pour le cas 2d, \'etant donn\'es 2 vecteurs $\vec{a}$ et $\vec{b}$ $\vec{u}$ se calcule gr\^ace au produit vectoriel:
+
+\begin{displaymath}
+\vec{u} = \vec{a} \wedge \vec{b}
+\end{displaymath}
+
+Ceci est illustr\'e par la figure \ref{rot3dUnAxe}.
+
+ \begin{figure}[htb]
   \centering
     \includegraphics[]{rot3d}
   \caption{
@@ -203,7 +218,86 @@ En 3 dimensions, il nous faudra \'egalement consid\'erer des rotations autour de
 		   \label{rot3d}
 \end{figure}
  
-\section{Impl\'ementation de l'algorithme CCD}
-\label{implementation}
+  \begin{figure}[htb]
+  \centering
+    \includegraphics[]{rot3dUnAxe}
+  \caption{
+          \textit{La transformation permettant d'aligner $\vec{a}$ \`a $\vec{b}$ peut s'exprimer comme une seule rotation autour de l'axe $\vec{u}$.}}
+		   \label{rot3dUnAxe}
+\end{figure}
  
+% Nous allons voir qu'en pratique avec l'algorithme 
+% CCD, et gr\^ace aux fonctionalit\'es de |Unity| passer de la 2d \`a la 3d est trivial.
+ 
+\section{L'algorithme CCD}
+\label{algo}
+
+\subsection*{D\'efinitions}
+\begin{itemize}
+\item $p_i$ est la position d'une articulation $q_i$;
+\item $p_e$ est la position de l'effecteur;
+\item $p_t$ est la position de la cible \`a atteindre.
+\end{itemize}
+
+
+\DeleteShortVerb{|}
+
+\subsection*{D\'eroulement de l'algorithme}
+La figure \ref{CCDALL} illustre le d\'eroulement de l'algorithme.
+On commence par choisir l'articulation $q_i = q_{n-1}$ la plus proche de l'effecteur.
+\begin{itemize}
+\item On calcule l'angle $\alpha$ form\'e entre les vecteurs $\vec{q_ip_e}$ et $\vec{q_ip_t}$;
+\item On effectue la rotation de centre $p_i$ et d'angle $\alpha$ qui aligne $\vec{q_ip_e}$ et $\vec{q_ip_t}$, autour de l'axe $\vec{q_ip_e} \wedge \vec{q_ip_t}$;
+\item Si la distance entre l'effecteur et la cible $||\vec{p_ep_t}||$ est inf\`erieure \`a un nombre $\epsilon \in R$, on arr\^ete l'algorithme, car l'objectif est atteint;
+\item Sinon deux cas sont possibles:
+	\begin{itemize}
+	\item si $i > 1$, on r\'ep\`ete ces op\'erations avec l'articulation $q_{i-1}$;
+	\item sinon nous sommes arriv\'es \`a la racine; on recommence alors avec $q_{n-1}$.
+	\end{itemize}
+\end{itemize}
+
+
+\MakeShortVerb{|}
+
+   \begin{figure}[htb]
+  \centering
+    \includegraphics[width=1\linewidth]{CCDALL}
+  \caption{
+          \textit{Un exemple d'application du CCD en 2 dimenstions. 6 rotations sont n\'ecessaires pour atteindre la cible t.}}
+		   \label{CCDALL}
+\end{figure}
+
+
+\section{Questions}
+\label{implementation}
+
+\question{1.}Charger la sc\`ene testScene.unity. Depuis l'explorateur de projet, ouvrir le fichier |CCD2d.cs|. Au besoin, regarder
+la documentation pour comprendre le type des param\`etres du script, ainsi que ceux pass\'es \`a la m\'ethode |CCDStep2D|.\newline
+
+
+\question{2.}Ecrire le code de la m\'ethode |ComputeAngle2D| qui calcule un angle sign\'e entre deux |Vector2|. Au besoin se servir de la documentation
+de |Vector2| et du namespace |Mathf|.\newline
+
+\question{3.}La m\'ethode |Update| va \^etre appel\'ee une fois par frame. Elle appelle \`a son tour la m\'ethode |CCDStep2D|. C'est une m\'ethode r\'ecursive dans le sens o\`u elle se rappelle elle-m\^eme
+avec le parent de l'articulation courante (|joint| en anglais). \\
+En d\'eduire ce que repr\'esente |gameObject|, et attacher le script \`a cet objet dans la sc\`ene depuis la fen\^etre |inspector| de |Unity|. \\
+Une fois ceci fait, assigner l'objet |target| en tant que param\`etre du script. \newline
+
+\question{4.}Ecrire le code de la m\'ethode |CCDStep2D|. S'aider de la documentation de la classe |Transform| afin de trouver la m\'ethode qui permet
+d'effectuer une rotation autour d'un axe. \\
+Dans la description de l'algorithme il est dit que l'on arr\^ete l'algorithme si la distance entre l'effecteur et la cible $||\vec{p_ep_t}||$ est inf\`erieure \`a un nombre $\epsilon \in R$.
+Il n'y a pas besoin de tester cette condition ici. Pourquoi supprimer cette condition d'arr\^et n'est pas dangereux dans notre cas? \newline
+
+\question{5.}
+Lancer l'application. D\'eplacer le cube cible avec les fl\`eches directionelles. V\'erifier que votre impl\'ementation fonctionne. \newline
+
+\question{6.}
+Depuis l'|inspector| d\'esactiver le script |CCD2d.cs|. \\ Ajouter le script |CCD3d.cs| au bon objet de la sc\`ene.\\
+Ecrire le code manquant pour faire fonctionner le script |CCD3d.cs| en s'aidant de la documentation de la classe |Vector3|.
+Constater que sous |Unity| il est encore plus facile de travailler en 3d qu'en 2d :). \newline
+
+
+\question{7.}
+Lancer l'application. Les touches |V| et |B| permettent de d\'eplacer le cube le long de l'axe $\vec{Oz}$, vous permettant de tester votre 
+algorithme en 3 dimensions.
 \end{document}

@@ -29,9 +29,9 @@ public class CCD2d : MonoBehaviour {
 	/// \return the value of the signed angle existing between a and b.
 	private float ComputeAngle2D(Vector2 a, Vector2 b)
 	{
-		float theta = 0;
+		float alpha = 0;
 		// TODO
-		return theta;
+		return alpha;
 	}
 	
 	/// \brief performs one step of the CCD algorithm in 2d. For each joint in the kinematic chain,
